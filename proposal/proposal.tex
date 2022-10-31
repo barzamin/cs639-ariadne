@@ -1,0 +1,51 @@
+\documentclass{article}
+
+\usepackage{biblatex}
+\addbibresource{ref.bib}
+
+
+\title{{\Large CS639 Project Proposal:}\\Automated optical identification\\of PCB photolithography defects}
+\author{Erin Moon \texttt{<limarshall@wisc.edu>}}
+
+\begin{document}
+\maketitle
+
+\emph{Automated optical inspection} (AOI) refers to any system which can optically inspect parts, whether installed or during manufacturing, for defects or fabrication correctness. Common examples of AOI are
+\begin{enumerate}
+    \item \textbf{printed circuit board trace/pad inspection}: detecting broken, pitted, or displaced traces and pads, and ensuring the fabricated board matches the original photomask
+    \item \textbf{printed circuit board \emph{assembly} inspection}: checking positions of parts, ensuring SMD components are correctly reflowed and did not tombstone, rotate, or displace, etc.
+    \item \textbf{metallurgic surface defect inspection}: identifying inclusion, pitting, scaling, etc defects in metal products (commonly, rolled steels).
+\end{enumerate}
+
+Often, AOI requires imaging and classifying parts \emph{in situ} on the production line, making it both accuracy and latency sensitive. The system outputs either a QC pass, or some specific defect class, often given an additional reference description for a golden standard part. By making these judgments quickly and accurately, end-of-line part yield can be significantly increased.
+
+Depending on problem domain, the computer vision required can be relatively involved, and may require identifying specific locations of defects in addition to classifying them.
+Also, as process yields increase, the inspection system will see fewer and fewer defective parts; for mature applications, datasets are thus extremely biased towards QC-passing images.
+
+In this academic context, another major challenge is the lack of available datasets. I initially wanted to focus on PCBA post-pick-and-place inspection for my project, but since AOI is performed by board houses, and images of assemblies or boards are derivative of the intellectual property of their clients, very little data is released publicly.
+
+What is publicly available is easily summarized. PCB-METAL \cite{pcb-metal}, FICS-PCB/FPIC \cite{jessurun2022fpic,lu2020fics}, and PCB-DSLR \cite{pramerdorfer2015} are image sets of PCBs, annotated with part footprints; they are largely intended to facilitate part identification in the context of PCBA security inspection. China Telecom published a collection of post-pick-and-place, pre-reflow cropped part footprint images, as the PCB-AoI dataset \cite{pcb-aoi}; this dataset focuses entirely on solder paste printing validation, not post-reflow validation (what I was interested in).
+
+There is only one dataset of note for PCB trace inspection, DeepPCB \cite{tang2019online}, but it is high quality, captured with a linear CCD scan and pre-binarized; this is similar to how boards are actually imaged in factories. Since this dataset is high quality, and trace inspection is a relatively well-constrained problem, I chose to focus on this.
+
+The DeepPCB dataset contains 1500 pairs of (reference image, image potentially containing defects); defects are annotated with a bounding box and type. Since the dataset prealigns reference template and part image pairs, I can further augment the dataset by randomly perturbing the "measured" images for each reference image with affine transformations, to simulate the effects of rotation/translation/lifting during imaging.
+
+I am specifically interested in not just classifying, but \emph{locating} defects. I intend to compare the performance of traditional computer vision techniques for AOI to a modern one-shot object detection neural network. The former method would effectively consist of landmark aligning the part image to the template image, computing areas of difference, and classifying these morphologically. For the latter method, I would like to explore transfer learning: using existing image classification models as encoders on both the part and reference images, computing a difference of these features, and training a feature pyramid object detector on this space; the encoders could be further fine-tuned during training.
+
+
+A rough preliminary timetable for the project follows: \\
+\begin{tabular}{l|l}
+    \textbf{date} & \textbf{goal} \\
+    \hline
+    oct 6 & project proposal \\
+    oct 12 & website draft, data ingest and start of augmentation system \\
+    nov 1 & traditional CV implementation done, transfer learning impl. started \\
+    nov 10 & project midterm report due \\
+    nov 30 & both AOI systems working; fine-tuning ML system \\
+    nov 10 & performance comparisons/data collection finished \\
+    dec 15 & project webpage due \\
+\end{tabular}
+% For metallurgical surface defect detection, there  the NEU surface defect database \cite{neusurfacedefect}, but since I'm not particularly familiar with the domain, I wouldn't feel comfortable building an AOI system based on this dataset.
+
+\printbibliography
+\end{document}
