@@ -30,14 +30,12 @@ class Defect:
         return (self.x1, self.y1)
 
     def __repr__(self):
-        return f'Defect({self.ty.name}, {self.upleft} to {self.upleft})'
-    
-    
+        return f'Defect({self.ty.name}: {self.upleft} to {self.upleft})'
 
 class DeepPCBData:
     def __init__(self, root):
         self.root = root
-        pprint(self._getpaths())
+        self.groups = self._getpaths()
 
     def _getpaths(self):
         groups = []
