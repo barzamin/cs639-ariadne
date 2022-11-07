@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+body {
+    max-width: 120ch;
+}
+
+.sc {
+    font-variant: small-caps;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{{section.content | safe}}
+{% endblock %}

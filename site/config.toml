@@ -1,0 +1,9 @@
+base_url = "https://barzamin.github.com/cs639-project"
+compile_sass = true
+build_search_index = false
+
+[markdown]
+# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
+highlight_code = false
+
+[extra]
