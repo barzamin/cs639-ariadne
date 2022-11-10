@@ -29,6 +29,14 @@ class Defect:
     def downright(self):
         return (self.x1, self.y1)
 
+    @property
+    def width(self):
+        return self.y1 - self.y0
+
+    @property
+    def height(self):
+        return self.y1 - self.y0
+
     def __repr__(self):
         return f'Defect({self.ty.name}: {self.upleft} to {self.upleft})'
 
@@ -42,6 +50,7 @@ class DeepPCBData:
         for grouppath in (self.root/'PCBData').glob('group*'):
             if m := re.match(r'group(\d+)', grouppath.stem):
                 gid, = m.groups()
+                gid = int(gid)
                 pairs = []
                 for annotpath in (grouppath/f'{gid}_not').glob('*.txt'):
                     pairid = int(annotpath.stem)
