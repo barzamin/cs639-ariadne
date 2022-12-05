@@ -9,7 +9,7 @@ class Unclassifiable(Exception): ...
 
 def bbox_overlaps_defect(bbox, defect):
     minr, minc, maxr, maxc = bbox
-    
+
     return not (minc > defect.x1 or minr > defect.y1 or maxc < defect.x0 or maxr < defect.y0)
 
 def get_defect_blobs(im_pair, closing_structure=None):
@@ -31,7 +31,7 @@ def _wf(x):
 def featurize(im_pair, ground_truth: list[Defect] = None, blob_thresh=10):
     im_truth, im_obsv = im_pair
     blobs, labels, defect_mask = get_defect_blobs(im_pair)
-    
+
     regiondata = []
 
     for region in ski.measure.regionprops(labels):
@@ -62,5 +62,5 @@ def featurize(im_pair, ground_truth: list[Defect] = None, blob_thresh=10):
         ])
 
         regiondata.append({'defect': defect, 'bbox': region.bbox, 'features': features})
-    
+
     return regiondata
