@@ -45,6 +45,12 @@ class DeepPCBData:
         self.root = root
         self.groups = self._getpaths()
 
+    @property
+    def flat(self):
+        for gid, group in self.groups:
+            for pair in group:
+                yield pair
+
     def _getpaths(self):
         groups = []
         for grouppath in (self.root/'PCBData').glob('group*'):
