@@ -1,9 +1,10 @@
 from .deeppcb import Defect
+from typing import List
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def showdefects(img, defects: list[Defect]):
+def showdefects(img, defects: List[Defect]):
     """
     show the given list of defects superimposed on top of an image.
     """

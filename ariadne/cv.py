@@ -2,6 +2,7 @@ import skimage as ski
 import skimage.morphology as morph
 import numpy as np
 from .util.deeppcb import Defect
+from typing import List
 
 # im_pair : (im_truth, im_obsv)
 
@@ -28,7 +29,7 @@ def get_defect_blobs(im_pair, closing_structure=None):
 def _wf(x):
     return np.count_nonzero(x)/x.size
 
-def featurize(im_pair, ground_truth: list[Defect] = None, blob_thresh=10):
+def featurize(im_pair, ground_truth: List[Defect] = None, blob_thresh=10):
     im_truth, im_obsv = im_pair
     blobs, labels, defect_mask = get_defect_blobs(im_pair)
 
