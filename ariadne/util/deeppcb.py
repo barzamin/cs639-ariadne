@@ -2,6 +2,7 @@ from pathlib import Path
 import re
 from pprint import pprint
 from enum import IntEnum
+import torch
 from dataclasses import dataclass
 
 class DefectType(IntEnum):
@@ -21,6 +22,12 @@ class Defect:
     y1: int
     ty: DefectType
 
+    def aslist(self):
+        return [self.x0, self.y0, self.x1, self.y1]
+
+    def astensor(self):
+        return torch.tensor(self.aslist())
+
     @property
     def upleft(self):
         return (self.x0, self.y0)
@@ -38,7 +45,7 @@ class Defect:
         return self.y1 - self.y0
 
     def __repr__(self):
-        return f'Defect({self.ty.name}: {self.upleft} to {self.upleft})'
+        return f'Defect({self.ty.name}: {self.upleft} to {self.downright})'
 
 class DeepPCBData:
     def __init__(self, root):
