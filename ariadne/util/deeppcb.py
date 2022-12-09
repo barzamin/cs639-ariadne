@@ -43,36 +43,21 @@ class Defect:
 class DeepPCBData:
     def __init__(self, root):
         self.root = root
-        self.groups = self._getpaths()
+        self.pairs = []
+        for annotpath in (self.root/'PCBData').glob('*/*_not/*.txt'):
+            pair_id = annotpath.stem
+            groupid = annotpath.parent.name.removesuffix('_not')
 
-    @property
-    def flat(self):
-        for gid, group in self.groups:
-            for pair in group:
-                yield pair
+            obsvpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
+            truthpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
+            assert(obsvpath.exists() and truthpath.exists())
 
-    def _getpaths(self):
-        groups = []
-        for grouppath in (self.root/'PCBData').glob('group*'):
-            if m := re.match(r'group(\d+)', grouppath.stem):
-                gid, = m.groups()
-                gid = int(gid)
-                pairs = []
-                for annotpath in (grouppath/f'{gid}_not').glob('*.txt'):
-                    pairid = int(annotpath.stem)
-                    testpath = grouppath/f'{gid}'/f'{pairid}_test.jpg'
-                    templatepath = grouppath/f'{gid}'/f'{pairid}_temp.jpg'
-
-                    pairs.append({
-                        'pairid': pairid,
-                        'testpath': testpath,
-                        'templatepath': templatepath,
-                        'annotpath': annotpath,
-                    })
-
-                groups.append((gid, pairs))
-
-        return groups
+            self.pairs.append({
+                'pairid': int(pair_id),
+                'obsvpath': obsvpath,
+                'truthpath': truthpath,
+                'annotpath': annotpath,
+            })
 
     def _read_annot(annotpath):
         annotations = []
