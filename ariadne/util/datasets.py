@@ -5,8 +5,9 @@ from .deeppcb import DeepPCBData
 from PIL import Image
 
 class DeepPCB(Dataset):
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, transforms=None):
         self.ds = DeepPCBData(root)
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.ds.pairs)
@@ -28,9 +29,14 @@ class DeepPCB(Dataset):
 
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
-        return img_truth, img_obsv, {
+        target = {
             'boxes': boxes,
             'area': area,
             'labels': labels,
             'image_id': pair['pairid']
         }
+
+        if self.transforms is not None:
+            img_truth, img_obsv, target= self.transforms(img_truth, img_obsv, target)
+
+        return img_truth, img_obsv, target
