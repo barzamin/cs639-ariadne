@@ -1,5 +1,6 @@
 import torch
 from torch import nn, Tensor
+import torchvision.transforms as T
 import torchvision.transforms.functional as F
 
 class Compose:
@@ -31,37 +32,37 @@ class ConvertImageDtype(nn.Module):
         obsv_image = F.convert_image_dtype(obsv_image, self.dtype)
         return tmpl_image, obsv_image, target
 
-class RandomHorizontalFlip(torchvision.transforms.RandomHorizontalFlip):
+class RandomHorizontalFlip(T.RandomHorizontalFlip):
     def forward(
         self, tmpl_image, obsv_image, target
     ):
         if torch.rand(1) < self.p:
-            tmpl_image = tvtF.hflip(tmpl_image)
-            obsv_image = tvtF.hflip(obsv_image)
+            tmpl_image = F.hflip(tmpl_image)
+            obsv_image = F.hflip(obsv_image)
 
             if target is not None:
-                _, _, width = tvtF.get_dimensions(tmpl_image)
+                _, _, width = F.get_dimensions(tmpl_image)
                 target["boxes"][:, [0, 2]] = width - target["boxes"][:, [2, 0]]
                 if "masks" in target:
                     target["masks"] = target["masks"].flip(-1)
-                if "keypoints" in target:
-                    keypoints = target["keypoints"]
-                    keypoints = _flip_coco_person_keypoints(keypoints, width)
-                    target["keypoints"] = keypoints
+                # if "keypoints" in target:
+                #     keypoints = target["keypoints"]
+                #     keypoints = _flip_coco_person_keypoints(keypoints, width)
+                #     target["keypoints"] = keypoints
 
         return tmpl_image, obsv_image, target
 
-class RandomVerticalFlip(torchvision.transforms.RandomVerticalFlip):
+class RandomVerticalFlip(T.RandomVerticalFlip):
     def forward(
         self, tmpl_image, obsv_image, target
     ):
         if torch.rand(1) < self.p:
         # if True:
-            tmpl_image = tvtF.vflip(tmpl_image)
-            obsv_image = tvtF.vflip(obsv_image)
+            tmpl_image = F.vflip(tmpl_image)
+            obsv_image = F.vflip(obsv_image)
 
             if target is not None:
-                _, height, _ = tvtF.get_dimensions(tmpl_image)
+                _, height, _ = F.get_dimensions(tmpl_image)
                 target["boxes"][:, [1, 3]] = height - target["boxes"][:, [3, 1]]
                 if "masks" in target:
                     raise NotImplementedError()
