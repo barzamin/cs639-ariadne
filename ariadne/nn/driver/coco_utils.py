@@ -152,12 +152,12 @@ def convert_to_coco_api(ds):
     for img_idx in range(len(ds)):
         # find better way to get target
         # targets = ds.get_annotations(img_idx)
-        img, targets = ds[img_idx]
+        tmpl_image, obsv_image, targets = ds[img_idx]
         image_id = targets["image_id"].item()
         img_dict = {}
         img_dict["id"] = image_id
-        img_dict["height"] = img.shape[-2]
-        img_dict["width"] = img.shape[-1]
+        img_dict["height"] = tmpl_image.shape[-2]
+        img_dict["width"] = tmpl_image.shape[-1]
         dataset["images"].append(img_dict)
         bboxes = targets["boxes"].clone()
         bboxes[:, 2:] -= bboxes[:, :2]
