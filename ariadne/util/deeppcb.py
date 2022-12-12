@@ -53,7 +53,10 @@ class DeepPCBData:
         self.pairs = []
         for annotpath in (self.root/'PCBData').glob('*/*_not/*.txt'):
             pair_id = annotpath.stem
-            groupid = annotpath.parent.name.removesuffix('_not')
+            groupid = annotpath.parent.name
+            # removesuffix('_not')
+            if groupid.endswith('_not'):
+                groupid = groupid[:-4]
 
             obsvpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
             truthpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
