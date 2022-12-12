@@ -4,7 +4,7 @@ import numpy as np
 from .util.deeppcb import Defect
 from typing import List
 
-# im_pair : (im_truth, im_obsv)
+# img_pair : (img_truth, img_obsv)
 
 class Unclassifiable(Exception): ...
 
@@ -13,11 +13,11 @@ def bbox_overlaps_defect(bbox, defect):
 
     return not (minc > defect.x1 or minr > defect.y1 or maxc < defect.x0 or maxr < defect.y0)
 
-def get_defect_blobs(im_pair, closing_structure=None):
-    im_truth, im_obsv = im_pair
+def get_defect_blobs(img_pair, closing_structure=None):
+    img_truth, img_obsv = img_pair
     closing_structure = closing_structure or morph.square(3)
 
-    defect_mask = morph.binary_opening(im_truth ^ im_obsv)
+    defect_mask = morph.binary_opening(img_truth ^ img_obsv)
     blobs = morph.binary_closing(defect_mask, closing_structure)
     blobs = morph.remove_small_holes(blobs)
     blobs = morph.remove_small_objects(blobs)
@@ -29,9 +29,9 @@ def get_defect_blobs(im_pair, closing_structure=None):
 def _wf(x):
     return np.count_nonzero(x)/x.size
 
-def featurize(im_pair, ground_truth: List[Defect] = None, blob_thresh=10):
-    im_truth, im_obsv = im_pair
-    blobs, labels, defect_mask = get_defect_blobs(im_pair)
+def featurize(img_pair, ground_truth: List[Defect] = None, blob_thresh=10):
+    img_truth, img_obsv = img_pair
+    blobs, labels, defect_mask = get_defect_blobs(img_pair)
 
     regiondata = []
 
@@ -56,10 +56,10 @@ def featurize(im_pair, ground_truth: List[Defect] = None, blob_thresh=10):
 
         # measure white fraction within defect blob and on contour, for both template and observed
         features = np.array([
-            _wf(im_obsv[rows, cols]),
-            _wf(im_obsv[labels==region.label]),
-            _wf(im_truth[rows, cols]),
-            _wf(im_truth[labels==region.label]),
+            _wf(img_obsv[rows, cols]),
+            _wf(img_obsv[labels==region.label]),
+            _wf(img_truth[rows, cols]),
+            _wf(img_truth[labels==region.label]),
         ])
 
         regiondata.append({'defect': defect, 'bbox': region.bbox, 'features': features})
