@@ -330,7 +330,8 @@ class PairwiseGeneralizedRCNN(nn.Module):
         # print('\n\n\nobsv features', obsv_features)
         # print('\n\n\ntmpl features', tmpl_features)
         # features = obsv_features - tmpl_features
-        # subtract feature channels at each level
+
+        # THE IMPORTANT PART FOR PAIRWISE FEATURE MAPS: subtract feature channels at each level
         features = OrderedDict()
         for level in tmpl_features.keys():
             features[level] = obsv_features[level] - tmpl_features[level]

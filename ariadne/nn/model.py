@@ -1,25 +1,34 @@
 import torch
-import torch.nn as nn
 import torchvision
+from torchvision.models.resnet import resnet50, ResNet50_Weights
+from torchvision.models.detection.backbone_utils import _resnet_fpn_extractor, _validate_trainable_layers
+
+from . import transform as T # pairwise transforms
+from .rcnn import PairwiseFasterRCNN
 from ..util.deeppcb import DefectType
-# from torchvision.models import vgg16
-# from torchvision.models.detection import FasterRCNN
-# from torchvision.models.detection.rpn import AnchorGenerator
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-
-class ISAriadne(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights="DEFAULT")
-
-        # replace pretrained ROI heads
-        num_classes = len(DefectType)
-        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
 
-    def forward(self, impair, targets = None) -> torch.Tensor:
-        print(impair)
-        return self.model(imdiff, targets)
-        # return x
+def get_transform(train):
+    transforms = []
+    transforms.append(T.PILToTensor())
+    transforms.append(T.ConvertImageDtype(torch.float))
+    if train:
+        transforms.append(T.RandomHorizontalFlip(0.5))
+        transforms.append(T.RandomVerticalFlip(0.5))
+    return T.Compose(transforms)
+
+def ariadne_resnet50():
+    num_classes = len(DefectType)
+
+    trainable_backbone_layers = 3 # default from fasterrcnn_resnet50_fpn
+    resnet_norm_layer = torchvision.ops.misc.FrozenBatchNorm2d
+
+    backbone = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1, norm_layer=resnet_norm_layer)
+    backbone = _resnet_fpn_extractor(backbone, trainable_backbone_layers)
+
+    model = PairwiseFasterRCNN(
+        backbone,
+        num_classes=num_classes,
+    )
+
+    return model
