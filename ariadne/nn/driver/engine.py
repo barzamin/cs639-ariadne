@@ -9,7 +9,7 @@ from .coco_eval import CocoEvaluator
 from .coco_utils import get_coco_api_from_dataset
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None):
+def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, logwriter=None, scaler=None):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value:.6f}"))
@@ -36,6 +36,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
         # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = utils.reduce_dict(loss_dict)
         losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+        print('loss_dict_reduced=', loss_dict_reduced)
+        print('losses_reduced=', losses_reduced)
 
         loss_value = losses_reduced.item()
 
