@@ -1,6 +1,6 @@
 import torchvision.transforms.functional as tvtF
 
-def show_results(img, prediction, score_thresh=0.8):
+def show_results(img, prediction, score_thresh=0.8, **kwargs):
     LABELMAP = [v.name for v in DefectType]
 
     mask = prediction['scores'] > score_thresh
@@ -9,4 +9,5 @@ def show_results(img, prediction, score_thresh=0.8):
         tvtF.convert_image_dtype(img, torch.uint8),
         prediction['boxes'][mask],
         [LABELMAP[l] for l in prediction['labels'][mask]],
+        **kwargs,
     ))
