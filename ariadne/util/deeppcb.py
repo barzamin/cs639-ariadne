@@ -59,7 +59,7 @@ class DeepPCBData:
                 groupid = groupid[:-4]
 
             obsvpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
-            truthpath = annotpath.parent.parent/groupid/f'{pair_id}_test.jpg'
+            truthpath = annotpath.parent.parent/groupid/f'{pair_id}_temp.jpg'
             assert(obsvpath.exists() and truthpath.exists())
 
             self.pairs.append({
