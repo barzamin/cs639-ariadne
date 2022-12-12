@@ -36,8 +36,6 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
         # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = utils.reduce_dict(loss_dict)
         losses_reduced = sum(loss for loss in loss_dict_reduced.values())
-        print('loss_dict_reduced=', loss_dict_reduced)
-        print('losses_reduced=', losses_reduced)
 
         loss_value = losses_reduced.item()
 
@@ -60,6 +58,11 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
 
         metric_logger.update(loss=losses_reduced, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+        if logwriter is not None:
+            logwriter.add_scalar('train/lr', optimizer.param_groups[0]["lr"])
+            logwriter.add_scalar('train/loss', losses_reduced.item())
+            logwriter.add_scalars('training/losses', {k: v.item() for k, v in loss_dict_reduced.items()})
 
     return metric_logger
 
