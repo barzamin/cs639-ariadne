@@ -28,7 +28,7 @@ class DeepPCB(Dataset):
 
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
-        return (img_truth, img_obsv), {
+        return img_truth, img_obsv, {
             'boxes': boxes,
             'area': area,
             'labels': labels,
