@@ -33,7 +33,7 @@ class DeepPCB(Dataset):
             'boxes': boxes,
             'area': area,
             'labels': labels,
-            'image_id': pair['pairid']
+            'image_id': torch.tensor([pair['pairid']]),
         }
 
         if self.transforms is not None:
