@@ -1,4 +1,7 @@
+import torch
+import torchvision
 import torchvision.transforms.functional as tvtF
+from ..util.deeppcb import DefectType
 
 def show_results(img, prediction, score_thresh=0.8, **kwargs):
     LABELMAP = [v.name for v in DefectType]
