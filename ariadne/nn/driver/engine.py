@@ -24,6 +24,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
             optimizer, start_factor=warmup_factor, total_iters=warmup_iters
         )
 
+    i = 0
     for tmpl_images, obsv_images, targets in metric_logger.log_every(data_loader, print_freq, header):
         tmpl_images = list(image.to(device) for image in tmpl_images)
         obsv_images = list(image.to(device) for image in obsv_images)
@@ -60,9 +61,11 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
         if logwriter is not None:
-            logwriter.add_scalar('train/lr', optimizer.param_groups[0]["lr"])
-            logwriter.add_scalar('train/loss', losses_reduced.item())
-            logwriter.add_scalars('training/losses', {k: v.item() for k, v in loss_dict_reduced.items()})
+            logwriter.add_scalar('train/lr', optimizer.param_groups[0]["lr"], i)
+            logwriter.add_scalar('train/loss', losses_reduced.item(), i)
+            logwriter.add_scalars('training/losses', {k: v.item() for k, v in loss_dict_reduced.items()}, i)
+
+        i += 1
 
     return metric_logger
 
