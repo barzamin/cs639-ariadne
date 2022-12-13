@@ -254,10 +254,11 @@ class PairwiseGeneralizedRCNN(nn.Module):
             the model
     """
 
-    def __init__(self, backbone: nn.Module, rpn: nn.Module, roi_heads: nn.Module, transform: nn.Module) -> None:
+    def __init__(self, backbone: nn.Module, pairwise_condensor: nn.Module, rpn: nn.Module, roi_heads: nn.Module, transform: nn.Module) -> None:
         super().__init__()
         self.transform = transform
         self.backbone = backbone
+        self.pairwise_condensor = pairwise_condensor
         self.rpn = rpn
         self.roi_heads = roi_heads
         # used only on torchscript mode
@@ -334,7 +335,7 @@ class PairwiseGeneralizedRCNN(nn.Module):
         # THE IMPORTANT PART FOR PAIRWISE FEATURE MAPS: subtract feature channels at each level
         features = OrderedDict()
         for level in tmpl_features.keys():
-            features[level] = obsv_features[level] - tmpl_features[level]
+            features[level] = self.pairwise_condensor(obsv_features[level], tmpl_features[level])
 
         # rpn just wants images to get dimensions and count. pass it one of the two `ImageList`s
         proposals, proposal_losses = self.rpn(obsv_images, features, targets)
@@ -357,6 +358,7 @@ class PairwiseFasterRCNN(PairwiseGeneralizedRCNN):
     def __init__(
         self,
         backbone,
+        pairwise_condensor=None,
         num_classes=None,
         # transform parameters
         min_size=800,
@@ -416,6 +418,9 @@ class PairwiseFasterRCNN(PairwiseGeneralizedRCNN):
 
         out_channels = backbone.out_channels
 
+        if pairwise_condensor is None:
+            pairwise_condensor = torch.sub
+
         if rpn_anchor_generator is None:
             rpn_anchor_generator = _default_anchorgen()
         if rpn_head is None:
@@ -470,4 +475,4 @@ class PairwiseFasterRCNN(PairwiseGeneralizedRCNN):
             image_std = [0.229, 0.224, 0.225]
         transform = PairwiseGeneralizedRCNNTransform(min_size, max_size, image_mean, image_std, **kwargs)
 
-        super().__init__(backbone, rpn, roi_heads, transform)
+        super().__init__(backbone, pairwise_condensor, rpn, roi_heads, transform)
