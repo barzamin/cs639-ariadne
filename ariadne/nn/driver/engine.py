@@ -23,7 +23,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
             optimizer, start_factor=warmup_factor, total_iters=warmup_iters
         )
 
-    i = 0
+    i = epoch*len(data_loader)
     for tmpl_images, obsv_images, targets in metric_logger.log_every(data_loader, print_freq, header):
         tmpl_images = list(image.to(device) for image in tmpl_images)
         obsv_images = list(image.to(device) for image in obsv_images)
