@@ -3,10 +3,11 @@ import sys
 import time
 
 import torch
-import torchvision.models.detection.mask_rcnn
 from . import utils
 from .coco_eval import CocoEvaluator
 from .coco_utils import get_coco_api_from_dataset
+from ariadne.eval import pycocotools_summarize
+
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, logwriter=None, scaler=None):
     model.train()
@@ -69,7 +70,46 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
 
     return metric_logger
 
-
 @torch.inference_mode()
-def evaluate(model, data_loader, device):
-    return
+def evaluate(model, data_loader, device, logwriter=None):
+    cpudev = torch.device('cpu')
+    model.eval()
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    header = "Test:"
+
+    coco = get_coco_api_from_dataset(data_loader.dataset)
+    iou_types = ['bbox']
+    coco_evaluator = CocoEvaluator(coco, iou_types)
+
+    for tmpl_images, obsv_images, targets in metric_logger.log_every(data_loader, 100, header):
+        tmpl_images = list(image.to(device) for image in tmpl_images)
+        obsv_images = list(image.to(device) for image in obsv_images)
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        model_time = time.time()
+        outputs = model(tmpl_images, obsv_images)
+
+        outputs = [{k: v.to(cpudev) for k, v in t.items()} for t in outputs]
+        model_time = time.time() - model_time
+
+        res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
+        evaluator_time = time.time()
+        coco_evaluator.update(res)
+        evaluator_time = time.time() - evaluator_time
+        metric_logger.update(model_time=model_time, evaluator_time=evaluator_time)
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print("Averaged stats:", metric_logger)
+    coco_evaluator.synchronize_between_processes()
+
+    # accumulate predictions from all images
+    coco_evaluator.accumulate()
+    coco_evaluator.summarize()
+
+    mAP_IoU_50_all = pycocotools_summarize(coco_evaluator.coco_eval['bbox'], iouThr=.5)
+    if logwriter is not None:
+        logwriter.add_scalar('test/mAP_IoU_50_all', mAP_IoU_50_all, )
+
+    return coco_evaluator
