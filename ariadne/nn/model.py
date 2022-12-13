@@ -27,13 +27,13 @@ def ariadne_resnet50():
     backbone = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1, norm_layer=resnet_norm_layer)
     backbone = _resnet_fpn_extractor(backbone, trainable_backbone_layers)
 
-    anchor_sizes = ((16,), (32,), (64,), (128,), (256,))
-    aspect_ratios = ((0.25, 0.5, 1.0, 2.0, 4.0),) * len(anchor_sizes)
-    anchorgen = AnchorGenerator(anchor_sizes, aspect_ratios)
+    # anchor_sizes = ((16,), (32,), (64,), (128,), (256,))
+    # aspect_ratios = ((0.25, 0.5, 1.0, 2.0, 4.0),) * len(anchor_sizes)
+    # anchorgen = AnchorGenerator(anchor_sizes, aspect_ratios)
 
     model = PairwiseFasterRCNN(
         backbone,
-        rpn_anchor_generator=anchorgen,
+        # rpn_anchor_generator=anchorgen,
         num_classes=num_classes,
     )
 
