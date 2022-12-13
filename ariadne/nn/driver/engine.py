@@ -71,7 +71,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, lo
     return metric_logger
 
 @torch.inference_mode()
-def evaluate(model, data_loader, device, logwriter=None):
+def evaluate(model, data_loader, device, epoch, logwriter=None):
     cpudev = torch.device('cpu')
     model.eval()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -110,6 +110,6 @@ def evaluate(model, data_loader, device, logwriter=None):
 
     mAP_IoU_50_all = pycocotools_summarize(coco_evaluator.coco_eval['bbox'], iouThr=.5)
     if logwriter is not None:
-        logwriter.add_scalar('test/mAP_IoU_50_all', mAP_IoU_50_all, )
+        logwriter.add_scalar('test/mAP_IoU_50_all', mAP_IoU_50_all, epoch)
 
     return coco_evaluator
