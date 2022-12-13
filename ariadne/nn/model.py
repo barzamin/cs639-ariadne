@@ -55,6 +55,8 @@ def ariadne_resnet50_tanh():
 
     class TanhPairwiseCondensor(nn.Module):
         def __init__(self):
+            super().__init__()
+
             self.transfer = nn.Tanh()
 
         def forward(self, obsv_features, tmpl_features):
