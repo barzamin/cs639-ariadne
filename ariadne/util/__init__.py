@@ -18,4 +18,3 @@ def showdefects(img, defects: List[Defect]):
         ax.text(defect.x0, defect.y0-5, f'{defect.ty.name}', color='r')
 
     return fig, ax
-

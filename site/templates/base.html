@@ -3,11 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
   <title>ARIADNE</title>
 
   <link rel="stylesheet" href="https://unpkg.com/latex.css/style.min.css" />
   <link rel="stylesheet" href="https://latex.now.sh/prism/prism.css">
+  <style>
+    figcaption {
+      font-style: italic;
+    }
+
+    @font-face {
+      font-family:'Libertinus Mono';
+      font-style:normal;
+      font-display: swap;
+      src:url('./fonts/LibertinusMono-Regular.woff2') format('woff2')
+    }
+
+    code, pre, kbd {
+      font-family: 'Libertinus Mono',Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;
+      font-size:85%
+    }
+
+    /* .subfigs {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      object-fit: contain;
+      max-width: 100%;
+    } */
+  </style>
   {% block styles %}
   {% endblock styles %}
 </head>
