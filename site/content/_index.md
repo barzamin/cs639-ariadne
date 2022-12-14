@@ -25,7 +25,7 @@ An example copper layer mask from a board design by the author; this is a <code>
 Given the above problem description, I chose to focus on comparison of observed copper layers with the source lithomasks. I implemented two fault detectors: a naive, morphology-based CV method and a (semi-)novel transfer learning method of my own design, and compared their performance on a real-world-like{% sidenote() %}Unfortunately, board fabrication houses generally operate as clients of other companies and do not own the IP they fabricate; as such, they cannot release production AOI datasets even if they wanted to.{% end %} dataset.
 
 ## Dataset
-There is only one dataset of note for PCB trace inspection—<a href="https://github.com/tangsanli5201/DeepPCB">DeepPCB</a>—but it is high quality, captured via linear CCD scanning, and pre-binarized; this is similar to how boards are actually imaged in factories. Since this dataset is high quality, and trace inspection is a relatively well-constrained problem, I chose to use it as the core of my project work.
+There is only one dataset of note for PCB trace inspection—[DeepPCB](https://github.com/tangsanli5201/DeepPCB)—but it is high quality, captured via linear CCD scanning, and pre-binarized; this is similar to how boards are actually imaged in factories. Since this dataset is high quality, and trace inspection is a relatively well-constrained problem, I chose to use it as the core of my project work.
 
 <!-- The DeepPCB dataset contains 1500 pairs of (*reference image*, *image potentially containing defects*); defects are annotated with a bounding box and type. Since the dataset prealigns reference template and part image pairs, I can further augment the dataset by randomly perturbing the "measured" images for each reference image with affine transformations, to simulate the effects of rotation/translation/lifting during imaging. -->
 
@@ -52,7 +52,7 @@ The annotations are provided in an *ad-hoc* text form, with one bbox and defect 
 
 ## Methodology
 ### Classical CV
-I am lucky to use a dataset which provides well-aligned pairs of clean binarized images as a starting point; due to low noise tolerance in traditional CV AOI methods, physically conditioning the imaging environment is extremely important, and that work has already been done for me. As such, I designed and implemented a fairly simple (naive, really!) procedure to identify defect regions, given the pair of a reference template and observed board:
+I am lucky to use a dataset which provides well-aligned pairs of clean binarized images as a starting point; due to low noise tolerance in traditional CV AOI methods, physically conditioning the imaging environment is extremely important, and that work has already been done for me. As such, I designed and implemented{% sidenote() %}all image processing is performed via <a href="https://scikit-image.org/"><code>scikit-image</code></a>{% end %} a naive procedure to identify defect regions, given the pair of a reference template and observed board:
 
 1. *XOR* the ground truth and observed images to produce a difference mask
 2. Perform binary opening on this mask to eliminate spidery structures.
@@ -73,16 +73,17 @@ A defect identified from the xor defect map, and histograms of its body and edge
 </figcaption>
 </figure>
 
-This produces a feature vector; instead of manually picking heuristic thresholds, I train a one-versus-one SVM classifier with a radial basis kernel on the defect region features.
+This produces a feature vector; instead of manually picking heuristic thresholds, I train a one-versus-one SVM classifier{% sidenote() %}via <a href="https://scikit-learn.org/stable/"><code>scikit-learn</code></a>'s <a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html"><code>SVC</code></a>{% end %} with a radial basis kernel on the defect region features.
 Intuitively, by computing the pixel distribution of an identified defect in both the template and observed image, we can determine whether the region contains erroneous copper, or is an erroneous void.
 
 ## Pairwise (Faster) R-CNNs: bifurcating the backbone
 
 
 <figure>
-<img src="img/pairwise_rcnn.svg">
+<img src="img/pairwise_rcnn.png">
 <figcaption>
-
+The <strong>Pairwise Faster R-CNN</strong> architecture.
+</figcaption>
 </figure>
 
 </article></main>
