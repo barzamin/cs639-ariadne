@@ -7,6 +7,8 @@
 
 <main><article>
 
+Also [presented "live"](https://youtu.be/djfai7SMhsI).
+
 ## Motivation
 Surface defect identification is an important problem in many industrial processes, and is often accomplished through automated optical inspection (AOI).
 In printed circuit board (PCB) manufacture, catching defects early in the production chain is extremely important; disconnected or shorted nets can be very difficult to diagnose or QA test in a final assembly. Automated optical inspection is thus widely deployed in the PCB industry, and is a topic of ongoing research in CV/ML; the latency and accuracy constraints are significant, since AOI operates as an online, interstitial part of the production line.
