@@ -15,8 +15,8 @@ class DeepPCB(Dataset):
     def __getitem__(self, idx):
         pair = self.ds.pairs[idx]
         annot = DeepPCBData._read_annot(pair['annotpath'])
-        img_obsv = Image.open(pair['obsvpath']).convert('1').convert("RGB")
-        img_truth = Image.open(pair['truthpath']).convert('1').convert("RGB")
+        img_obsv = Image.open(pair['obsvpath']).convert('1')
+        img_truth = Image.open(pair['truthpath']).convert('1')
 
 
         n_objects = len(annot)
@@ -37,6 +37,6 @@ class DeepPCB(Dataset):
         }
 
         if self.transforms is not None:
-            img_truth, img_obsv, target= self.transforms(img_truth, img_obsv, target)
+            img_truth, img_obsv, target = self.transforms(img_truth, img_obsv, target)
 
         return img_truth, img_obsv, target
