@@ -81,6 +81,9 @@ If featurization fails (more than one continuous contour), or a ground truth bbo
 ## Pairwise (Faster) R-CNNs: bifurcating the backbone
 
 
+## Results
+I trained the described pairwise R-CNN architecture for 28 epochs, across a 1000-pair subset of the 1500-pair dataset. The training set was augmented with vertical and horizontal flips (p=.5).
+
 <figure>
 <img src="img/pairwise_rcnn.png">
 <figcaption>

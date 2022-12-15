@@ -93,14 +93,22 @@ def evaluate(model, data_loader, device, epoch, logwriter=None):
         outputs = [{k: v.to(cpudev) for k, v in t.items()} for t in outputs]
         model_time = time.time() - model_time
 
-        # res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
+        res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
 
-        metric_logger.update(model_time=model_time)
-
+        evaluator_time = time.time()
+        coco_evaluator.update(res)
+        evaluator_time = time.time() - evaluator_time
+        metric_logger.update(model_time=model_time, evaluator_time=evaluator_time)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
 
+
+    coco_evaluator.synchronize_between_processes()
+
+    # accumulate predictions from all images
+    coco_evaluator.accumulate()
+    coco_evaluator.summarize()
 
     mAP_IoU_50_all = pycocotools_summarize(coco_evaluator.coco_eval['bbox'], iouThr=.5)
     if logwriter is not None:
