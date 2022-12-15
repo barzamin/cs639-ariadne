@@ -93,23 +93,58 @@ def evaluate(model, data_loader, device, epoch, logwriter=None):
         outputs = [{k: v.to(cpudev) for k, v in t.items()} for t in outputs]
         model_time = time.time() - model_time
 
-        res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
-        evaluator_time = time.time()
-        coco_evaluator.update(res)
-        evaluator_time = time.time() - evaluator_time
-        metric_logger.update(model_time=model_time, evaluator_time=evaluator_time)
+        # res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
+
+        metric_logger.update(model_time=model_time)
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
-    coco_evaluator.synchronize_between_processes()
 
-    # accumulate predictions from all images
-    coco_evaluator.accumulate()
-    coco_evaluator.summarize()
 
     mAP_IoU_50_all = pycocotools_summarize(coco_evaluator.coco_eval['bbox'], iouThr=.5)
     if logwriter is not None:
         logwriter.add_scalar('test/mAP_IoU_50_all', mAP_IoU_50_all, epoch)
 
     return coco_evaluator
+
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from pprint import pprint
+
+@torch.inference_mode()
+def evaluate_torchmetrics(model, data_loader, device, epoch, logwriter=None):
+    cpudev = torch.device('cpu')
+    model.eval()
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    header = "Test:"
+
+    metric = MeanAveragePrecision()
+
+    for tmpl_images, obsv_images, targets in metric_logger.log_every(data_loader, 100, header):
+        tmpl_images = list(image.to(device) for image in tmpl_images)
+        obsv_images = list(image.to(device) for image in obsv_images)
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        model_time = time.time()
+        outputs = model(tmpl_images, obsv_images)
+
+        outputs = [{k: v.to(cpudev) for k, v in t.items()} for t in outputs]
+        model_time = time.time() - model_time
+
+        evaluator_time = time.time()
+        metric.update(outputs, targets)
+        evaluator_time = time.time() - evaluator_time
+        metric_logger.update(model_time=model_time, evaluator_time=evaluator_time)
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print("Averaged stats:", metric_logger)
+
+    # mAP_IoU_50_all = pycocotools_summarize(coco_evaluator.coco_eval['bbox'], iouThr=.5)
+    # if logwriter is not None:
+    #     logwriter.add_scalar('test/mAP_IoU_50_all', mAP_IoU_50_all, epoch)
+
+    pprint(metric.compute())
+
+    return metric

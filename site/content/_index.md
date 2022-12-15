@@ -38,7 +38,7 @@ An example image pair from the DeepPCB dataset. <b>Left</b>: annotated observed 
 </figcaption>
 </figure>
 
-The dataset contains 1500 pairs of (*reference image*, *observed image potentially containing defects*); defects are annotated with a bounding box and type. The defect classes enumerated by the dataset authors are:
+The dataset contains 1500 pairs of (*reference image*, *observed image potentially containing defects*); defects are annotated with a bounding box and type. The defect classes enumerated by the <!-- dataset --> authors are:
 <!-- The DeepPCB dataset annotates defects with a bbox and type. The defect classes enumerated by the dataset authors are: -->
 
 - `OPEN`: a full cut (region of missing copper) through a board trace
@@ -52,7 +52,7 @@ The annotations are provided in an *ad-hoc* text form, with one bbox and defect 
 
 ## Methodology
 ### Classical CV
-I am lucky to use a dataset which provides well-aligned pairs of clean binarized images as a starting point; due to low noise tolerance in traditional CV AOI methods, physically conditioning the imaging environment is extremely important, and that work has already been done for me. As such, I designed and implemented{% sidenote() %}all image processing is performed via <a href="https://scikit-image.org/"><code>scikit-image</code></a>{% end %} a naive procedure to identify defect regions, given the pair of a reference template and observed board:
+I am lucky to use a dataset which provides well-aligned pairs of clean binarized images as a starting point; due to low noise tolerance in traditional CV AOI methods, physically conditioning the imaging environment is extremely important, and that work has already been done for me. As such, I designed and implemented{% sidenote() %}All image processing is performed via <a href="https://scikit-image.org/"><code>scikit-image</code></a>.{% end %} a naive procedure to identify defect regions, given the pair of a reference template and observed board:
 
 1. *XOR* the ground truth and observed images to produce a difference mask
 2. Perform binary opening on this mask to eliminate spidery structures.
@@ -73,8 +73,10 @@ A defect identified from the xor defect map, and histograms of its body and edge
 </figcaption>
 </figure>
 
-This produces a feature vector; instead of manually picking heuristic thresholds, I train a one-versus-one SVM classifier{% sidenote() %}via <a href="https://scikit-learn.org/stable/"><code>scikit-learn</code></a>'s <a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html"><code>SVC</code></a>{% end %} with a radial basis kernel on the defect region features.
+This produces a feature vector; instead of manually picking heuristic thresholds, I train a one-versus-one SVM classifier{% sidenote() %}Via <a href="https://scikit-learn.org/stable/"><code>scikit-learn</code></a>'s <a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html"><code>SVC</code></a>.{% end %} with a radial basis kernel on the defect region features.
 Intuitively, by computing the pixel distribution of an identified defect in both the template and observed image, we can determine whether the region contains erroneous copper, or is an erroneous void.
+
+If featurization fails (more than one continuous contour), or a ground truth bbox does not overlap an identified bbox during training, the object is discarded. Likewise, when predicting, if a defect cannot be featurized, it is considered a classification error.
 
 ## Pairwise (Faster) R-CNNs: bifurcating the backbone
 
