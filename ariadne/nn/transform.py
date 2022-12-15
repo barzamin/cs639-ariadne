@@ -16,8 +16,8 @@ class PILToTensor(nn.Module):
     def forward(
         self, tmpl_image, obsv_image, target,
     ):
-        tmpl_image = F.pil_to_tensor(tmpl_image.convert('rgb'))
-        obsv_image = F.pil_to_tensor(obsv_image.convert('rgb'))
+        tmpl_image = F.pil_to_tensor(tmpl_image.convert('RGB'))
+        obsv_image = F.pil_to_tensor(obsv_image.convert('RGB'))
         return tmpl_image, obsv_image, target
 
 class ConvertImageDtype(nn.Module):
