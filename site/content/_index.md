@@ -79,16 +79,85 @@ Intuitively, by computing the pixel distribution of an identified defect in both
 If featurization fails (more than one continuous contour), or a ground truth bbox does not overlap an identified bbox during training, the object is discarded. Likewise, when predicting, if a defect cannot be featurized, it is considered a classification error.
 
 ## Pairwise (Faster) R-CNNs: bifurcating the backbone
+I chose to pose defect identification as an object detection problem: given two images of a copper layer, report bboxes and classes for all differences. Faster R-CNN{% sidenote() %}<a href="https://arxiv.org/abs/1506.01497"><em>Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks</em>, S. Ren et al, 2015</a>.{%end%} provided the underlying model architecture; I used a pretrained ResNet50 CNN backbone, extracting feature maps from inner layers and passing them through a feature pyramid network {%sidenote()%}See <a href="https://arxiv.org/abs/1612.03144">Feature Pyramid Networks for Object Detection, Lin et al, 2017</a>.{%end%}. I unfroze <code>layer2–layer4</code> to fine-tune the backbone.
 
+At a high level, Faster R-CNN operates by sliding a fully-convolutional attention module, the *region proposal network*, over the input feature maps; this produces proposed anchors at each position of the RPN's sliding window. This is used to guide RoI pooling in an underlying jointly trained Fast R-CNN network, which produces final scores and classes.
 
-## Results
-I trained the described pairwise R-CNN architecture for 28 epochs, across a 1000-pair subset of the 1500-pair dataset. The training set was augmented with vertical and horizontal flips (p=.5).
+R-CNNs are designed to take a single feature map, extracted from a single image, as input; I thus had to extend the architecture to support the problem of pairwise comparison. To detect objects corresponding to *differences* between two images, I run the backbone over both images to featurize them, then pass these maps through a unit I term the "*pairwise condensor*" to reduce them to a single feature map of differences. In my initial implementation, this condensor is simply a subtraction between the feature maps, but it would be possible to use any trainable module which takes two feature maps as input and produces one as output.
 
 <figure>
 <img src="img/pairwise_rcnn.png">
 <figcaption>
-The <strong>Pairwise Faster R-CNN</strong> architecture.
+The <strong>Pairwise Faster R-CNN</strong> (PFaR-CNN) architecture.
 </figcaption>
 </figure>
+
+## Results
+I implemented the described pairwise R-CNN architecture in PyTorch, extending the existing <code>torchvision</code> systems for R-CNNs and object detectors. The model was trained for 28 epochs, across a 1000-pair subset of the 1500-pair dataset; I augmented training data with vertical and horizontal flips (p=.5). To evaluate performance, I used the `pycocotools` implementation of the mAP (mean average precision) and mAR (mean average recall) object detection metrics.
+
+For the traditional CV implementation, I fit the SVM with the same size of train/test split and evaluated mAP/mAR.
+While evaluating both methods, I also captured average inference runtime; PFaR-CNN performance was evaluated on an Nvidia A100 (<code>A100-SXM4-40GB</code>), while CV performance was measured on an Apple M1 Max (64GiB RAM, <code>MacBookPro18,4</code>). Note the inclusion of another naive CV model{%sidenote() %}S. H Indera Putera and Z. Ibrahim, "<em>Printed circuit board defect detection using mathematical morphology and matlab image processing tools</em>," cited in <a href="https://arxiv.org/abs/1902.06197">Online PCB Defect Detector on a New PCB Defect Dataset</a>, Tang et al, 2019{%end%}, since, as discussed in the conclusions, mine is incredibly underpowered.
+
+<table>
+<caption>Model performance.</caption>
+<thead>
+    <tr>
+    <th></th>
+    <th colspan=3 scope=col>mAP</th>
+    <th colspan=3 scope=col>mAR</th>
+    <th></th>
+    </tr>
+    <tr>
+        <th>model</th>
+        <th>IoU=0.15</th>
+        <th>IoU=0.50</th>
+        <th>IoU=0.75</th>
+        <th>IoU=0.15</th>
+        <th>IoU=0.50</th>
+        <th>IoU=0.75</th>
+        <th>inferences/sec</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <th scope=row>PFaR-CNN</th>
+        <td><u>.995</u></td>
+        <td><u>.990</u></td>
+        <td><u>.920</u></td>
+        <td><u>.999</u></td>
+        <td><u>.997</u></td>
+        <td><u>.950</u></td>
+        <td>18.69</td>
+    </tr>
+    <tr>
+        <th scope=row>Naive CV</th>
+        <td>.230</td>
+        <td>.0002</td>
+        <td>—</td>
+        <td>.402</td>
+        <td>.0042</td>
+        <td>—</td>
+        <td>31.95</td>
+    </tr>
+    <tr>
+        <th scope=row>CV (Putera and Ibrahim, via Tang et al)</th>
+        <td>—</td>
+        <td>.893</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td><u>78</u></td>
+    </tr>
+</tbody>
+</table>
+
+## Observations and future work
+My CV implementation is *pitiful* and likely buggy; I poured most of the project time into the R-CNN defect detector, and we did not cover very much morphological processing in this class. It is completely unfair to compare against it; this is why I included the Putera and Ibrahim CV performance. It could absolutely be improved, as evidenced by this other image-processing-based model; I would probably start by exploiting connected component analyses more extensively to classify defects. Additionally, my method has another disadvantage when performing COCO-style IoU/mAP evaluations: the DeepPCB dataset significantly oversizes its bboxes, whereas my model tends to predict the tightest possible bounding box, artificially deflating IoU even if the predicted bbox is completely contained within the ground truth. This means that I have to decrease the IoU threshold to comically low values, as seen in Table 1, for the COCO methodology to match ground truth with prediction whatsoever. My
+
+The R-CNN has acceptable, but unimpressive performance, both in its predictions and its runtime. The condensor's extreme simplicity and linearity are a potential issue; it would be reasonable to explore replacing it with other modules that could learn a more sophisticated representation of difference in feature pyramids. Additionally, this is not a truly novel approach; it is very similar to the method evaluated by Tang et al.{%sidenote() %}<a href="https://arxiv.org/abs/1902.06197">Online PCB Defect Detector on a New PCB Defect Dataset</a>, Tang et al, 2019{%end%}. Finally, the loss optimized during training was simply the sum of the objectness loss, box regression loss, and classifier loss; it would be prudent to adjust this objective to maximize recall, since missing a defect is significantly detrimental to a production run of PCBs.
+
+In general, this type of "spot the difference" problem—given two input images, classify the differences—is, as far as I can tell, rarely studied in CV/ML, which is somewhat surprising! Producing a *semantic diff* of images seems useful in other applications, and this work offers many extension points to work towards that goal. Again, the PFaR-CNN approach is not novel; the main contribution my work offers is pragmatic. By releasing code, and putting in a significant amount of effort to extend existing object detection mechanisms used in <code>torchvision</code>, this project establishes a basis for further work in difference detection via deep CNNs.
+
 
 </article></main>
